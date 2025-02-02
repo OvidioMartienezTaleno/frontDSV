@@ -13,8 +13,11 @@ import { Picker } from "@react-native-picker/picker"; // Importar Picker desde @
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Importar AsyncStorage
 
 import ViewCliente from "./Pages/viewCliente";
+import ViewProveedor from "./Pages/viewProveedor"; // Importar la pantalla de proveedor
+import ViewOrganizador from "./Pages/viewOrganizador"; // Importar la pantalla de organizador
 import MensajeScreen from "./Pages/Mensaje"; // Asegúrate de actualizar la ruta
 import OrganizadorScreen from "./Pages/Organizador"; // Asegúrate de actualizar la ruta
+import EventosScreen from "./Pages/Eventos"; // Importar la pantalla de eventos
 
 const Stack = createStackNavigator();
 
@@ -37,17 +40,54 @@ function HomeScreen({ navigation }) {
   };
 
   const handleLogin = async () => {
+    let usuarioEncontrado = null;
+    let tipoUsuario = "";
+
     try {
-      const response = await axios.get("http://192.168.1.127:8080/usuarios");
-      const usuarios = response.data;
-      const usuarioEncontrado = usuarios.find(
+      // Verificar en usuarios
+      let response = await axios.get("http://192.168.1.127:8080/usuarios");
+      let usuarios = response.data;
+      usuarioEncontrado = usuarios.find(
         (user) => user.correo === email && user.password === password
       );
+      if (usuarioEncontrado) tipoUsuario = "Cliente";
+
+      if (!usuarioEncontrado) {
+        // Verificar en organizadores
+        response = await axios.get("http://192.168.1.127:8080/organizador");
+        let organizadores = response.data;
+        usuarioEncontrado = organizadores.find(
+          (user) => user.correo === email && user.password === password
+        );
+        if (usuarioEncontrado) tipoUsuario = "Organizador";
+      }
+
+      if (!usuarioEncontrado) {
+        // Verificar en proveedores
+        response = await axios.get("http://192.168.1.127:8080/proveedor");
+        let proveedores = response.data;
+        usuarioEncontrado = proveedores.find(
+          (user) => user.correo === email && user.password === password
+        );
+        if (usuarioEncontrado) tipoUsuario = "Proveedor";
+      }
 
       if (usuarioEncontrado) {
         alert("Inicio de sesión exitoso");
         await saveProfile({ nombre: usuarioEncontrado.nombre, correo: email });
-        navigation.navigate("Cliente", { userEmail: email }); // Pasar userEmail al navegar a ViewCliente
+        switch (tipoUsuario) {
+          case "Cliente":
+            navigation.navigate("Cliente", { userEmail: email });
+            break;
+          case "Organizador":
+            navigation.navigate("OrganizadorView", { userEmail: email });
+            break;
+          case "Proveedor":
+            navigation.navigate("ProveedorView", { userEmail: email });
+            break;
+          default:
+            alert("Tipo de cuenta desconocido: " + tipoUsuario);
+        }
       } else {
         alert("Correo o contraseña incorrectos");
       }
@@ -57,28 +97,62 @@ function HomeScreen({ navigation }) {
     }
   };
 
-  const handleCreateAccount = async () => {
+  const verificarCorreoExistente = async (correo) => {
     try {
-      const response = await axios.get("http://192.168.1.127:8080/usuarios");
-      const usuarios = response.data;
-      const usuarioExistente = usuarios.find((user) => user.correo === email);
-
-      if (usuarioExistente) {
-        alert("Este correo ya está registrado.");
-        return;
+      // Verificar en usuarios
+      const usuariosResponse = await axios.get(
+        "http://192.168.1.127:8080/usuarios"
+      );
+      const usuarios = usuariosResponse.data;
+      if (usuarios.some((user) => user.correo === correo)) {
+        return true;
       }
 
-      const nuevoUsuario = {
-        nombre: nombreCompleto,
-        correo: email,
-        password: password,
-        ubicacion: ubicacion,
-        telefono: telefono,
-        tipo: accountType,
-      };
+      // Verificar en organizadores
+      const organizadoresResponse = await axios.get(
+        "http://192.168.1.127:8080/organizador"
+      );
+      const organizadores = organizadoresResponse.data;
+      if (organizadores.some((user) => user.correo === correo)) {
+        return true;
+      }
 
+      // Verificar en proveedores
+      const proveedoresResponse = await axios.get(
+        "http://192.168.1.127:8080/proveedor"
+      );
+      const proveedores = proveedoresResponse.data;
+      if (proveedores.some((user) => user.correo === correo)) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Error al verificar el correo:", error);
+      alert("Error al verificar el correo");
+      return false;
+    }
+  };
+
+  const handleCreateAccount = async () => {
+    const correoExistente = await verificarCorreoExistente(email);
+    if (correoExistente) {
+      alert("Este correo ya está registrado.");
+      return;
+    }
+
+    const nuevoUsuario = {
+      nombre: nombreCompleto,
+      correo: email,
+      password: password,
+      ubicacion: ubicacion,
+      telefono: telefono,
+      tipo: accountType,
+    };
+
+    try {
       const createResponse = await axios.post(
-        "http://192.168.1.127:8080/usuarios",
+        `http://192.168.1.127:8080/${accountType.toLowerCase()}`,
         nuevoUsuario
       );
 
@@ -86,7 +160,19 @@ function HomeScreen({ navigation }) {
         alert("Cuenta creada exitosamente");
         await saveProfile({ nombre: nombreCompleto, correo: email });
         setIsCreatingAccount(false);
-        navigation.navigate("Cliente", { userEmail: email }); // Pasar userEmail al navegar a ViewCliente
+        switch (accountType) {
+          case "Cliente":
+            navigation.navigate("Cliente", { userEmail: email });
+            break;
+          case "Organizador":
+            navigation.navigate("OrganizadorView", { userEmail: email });
+            break;
+          case "Proveedor":
+            navigation.navigate("ProveedorView", { userEmail: email });
+            break;
+          default:
+            alert("Tipo de cuenta desconocido");
+        }
       } else {
         alert("Error al crear la cuenta");
       }
@@ -196,6 +282,21 @@ export default function App() {
           name="Mensaje"
           component={MensajeScreen}
           options={{ title: "Mensajes" }}
+        />
+        <Stack.Screen
+          name="OrganizadorView"
+          component={ViewOrganizador}
+          options={{ title: "Vista Organizador" }}
+        />
+        <Stack.Screen
+          name="ProveedorView"
+          component={ViewProveedor}
+          options={{ title: "Vista Proveedor" }}
+        />
+        <Stack.Screen
+          name="Eventos"
+          component={EventosScreen}
+          options={{ title: "Eventos" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

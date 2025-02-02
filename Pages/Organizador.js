@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 function Organizador() {
   const [organizadores, setOrganizadores] = useState([]);
   const [selectedOrganizador, setSelectedOrganizador] = useState(null);
-  const navigation = useNavigation(); // Usar la navegación
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchOrganizadores = async () => {
@@ -39,16 +40,27 @@ function Organizador() {
     }
   };
 
-  const handleContract = () => {
-    // Aquí puedes agregar la lógica para contratar al organizador
-    alert("Contratar a " + selectedOrganizador.nombre);
+  const handleContract = async () => {
+    if (selectedOrganizador) {
+      try {
+        const perfilGuardado = await AsyncStorage.getItem("perfil");
+        const perfil = perfilGuardado ? JSON.parse(perfilGuardado) : {};
+
+        await AsyncStorage.setItem("idOrganizador", selectedOrganizador.correo);
+        await AsyncStorage.setItem("idUsuario", perfil.correo);
+
+        navigation.navigate("Eventos", { isNewEvent: true }); // Navegar a la vista de Eventos
+      } catch (error) {
+        console.error("Error al guardar correos en AsyncStorage:", error);
+      }
+    }
   };
 
   return (
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.scrollContainer}
-      showsVerticalScrollIndicator={true} // Muestra la barra de desplazamiento
+      showsVerticalScrollIndicator={true}
     >
       {selectedOrganizador ? (
         <View style={styles.profileContainer}>
@@ -108,7 +120,7 @@ export default function OrganizadorScreen() {
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.scrollContainer}
-      showsVerticalScrollIndicator={true} // Muestra la barra de desplazamiento
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.container}>
         <Organizador />

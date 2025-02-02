@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { useRoute } from "@react-navigation/native"; // Importar useRoute
+import { useRoute } from "@react-navigation/native";
 
 export default function MensajeScreen() {
   const [mensajes, setMensajes] = useState([]);
@@ -17,7 +17,7 @@ export default function MensajeScreen() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [perfil, setPerfil] = useState(null);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
-  const route = useRoute(); // Obtener la ruta y sus parámetros
+  const route = useRoute();
 
   useEffect(() => {
     // Cargar el perfil guardado desde AsyncStorage
@@ -36,61 +36,67 @@ export default function MensajeScreen() {
   }, []);
 
   useEffect(() => {
-    if (perfil) {
-      // Obtener mensajes y organizarlos por chats
-      const fetchMensajes = async () => {
-        try {
-          const response = await axios.get(
-            "http://192.168.1.127:8080/mensajes"
-          );
-          const mensajesFiltrados = response.data.filter(
-            (mensaje) =>
-              mensaje.idEnviado === perfil.correo ||
-              mensaje.idRecibido === perfil.correo
-          );
-
-          // Organizar mensajes por chats y ordenar por fecha ascendente
-          const chatDict = {};
-          mensajesFiltrados.forEach((mensaje) => {
-            const chatId =
-              mensaje.idEnviado === perfil.correo
-                ? mensaje.idRecibido
-                : mensaje.idEnviado;
-            if (!chatDict[chatId]) {
-              chatDict[chatId] = [];
-            }
-            chatDict[chatId].push(mensaje);
-          });
-
-          // Crear una lista de chats y ordenar los mensajes por fecha de forma ascendente
-          const chatList = Object.keys(chatDict).map((chatId) => ({
-            chatId,
-            mensajes: chatDict[chatId].sort(
-              (a, b) => new Date(a.fecha) - new Date(b.fecha)
-            ),
-          }));
-
-          setChats(chatList);
-
-          // Si hay un chatId en los parámetros de la ruta, seleccionar ese chat
-          if (route.params?.chatId) {
-            const selectedChat = chatList.find(
-              (chat) => chat.chatId === route.params.chatId
+    const cargarMensajes = async () => {
+      if (perfil) {
+        // Obtener mensajes y organizarlos por chats
+        const fetchMensajes = async () => {
+          try {
+            const response = await axios.get(
+              "http://192.168.1.127:8080/mensajes"
             );
-            if (selectedChat) {
-              setSelectedChat(selectedChat);
-            } else {
-              // Crear un nuevo chat si no existe
-              setSelectedChat({ chatId: route.params.chatId, mensajes: [] });
-            }
-          }
-        } catch (error) {
-          console.error("Error al obtener mensajes:", error);
-        }
-      };
+            const mensajesFiltrados = response.data.filter(
+              (mensaje) =>
+                mensaje.idEnviado === perfil.correo ||
+                mensaje.idRecibido === perfil.correo
+            );
 
-      fetchMensajes();
-    }
+            // Organizar mensajes por chats y ordenar por fecha ascendente
+            const chatDict = {};
+            mensajesFiltrados.forEach((mensaje) => {
+              const chatId =
+                mensaje.idEnviado === perfil.correo
+                  ? mensaje.idRecibido
+                  : mensaje.idEnviado;
+              if (!chatDict[chatId]) {
+                chatDict[chatId] = [];
+              }
+              chatDict[chatId].push(mensaje);
+            });
+
+            // Crear una lista de chats y ordenar los mensajes por fecha de forma ascendente
+            const chatList = Object.keys(chatDict).map((chatId) => ({
+              chatId,
+              mensajes: chatDict[chatId].sort(
+                (a, b) => new Date(a.fecha) - new Date(b.fecha)
+              ),
+            }));
+
+            setChats(chatList);
+
+            // Si hay un chatId en los parámetros de la ruta, seleccionar ese chat
+            if (route.params?.chatId) {
+              const selectedChat = chatList.find(
+                (chat) => chat.chatId === route.params.chatId
+              );
+              if (selectedChat) {
+                setSelectedChat(selectedChat);
+              } else {
+                // Crear un nuevo chat si no existe
+                setSelectedChat({ chatId: route.params.chatId, mensajes: [] });
+              }
+            }
+          } catch (error) {
+            console.error("Error al obtener mensajes:", error);
+          }
+        };
+
+        fetchMensajes();
+      }
+    };
+
+    const intervalo = setInterval(cargarMensajes, 1000);
+
+    return () => clearInterval(intervalo); // Limpiar el intervalo cuando el componente se desmonte
   }, [perfil, route.params?.chatId]);
 
   const enviarMensaje = async () => {

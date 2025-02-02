@@ -1,4 +1,3 @@
-// Proveedor.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -7,11 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 function Proveedor() {
   const [proveedores, setProveedores] = useState([]);
   const [selectedProveedor, setSelectedProveedor] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchProveedores = async () => {
@@ -30,11 +32,28 @@ function Proveedor() {
     setSelectedProveedor(proveedor);
   };
 
+  const handleSendMessage = () => {
+    if (selectedProveedor) {
+      navigation.navigate("Mensaje", { chatId: selectedProveedor.correo });
+    }
+  };
+
+  const handleContract = async () => {
+    if (selectedProveedor) {
+      try {
+        await AsyncStorage.setItem("idProveedor", selectedProveedor.correo);
+        navigation.navigate("Eventos", { isSelectingEvent: true });
+      } catch (error) {
+        console.error("Error al guardar idProveedor en AsyncStorage:", error);
+      }
+    }
+  };
+
   return (
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.scrollContainer}
-      showsVerticalScrollIndicator={true} // Muestra la barra de desplazamiento
+      showsVerticalScrollIndicator={true}
     >
       {selectedProveedor ? (
         <View style={styles.profileContainer}>
@@ -54,6 +73,18 @@ function Proveedor() {
             onPress={() => setSelectedProveedor(null)}
           >
             <Text style={styles.backButtonText}>Volver a la lista</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.messageButton}
+            onPress={handleSendMessage}
+          >
+            <Text style={styles.buttonText}>Mensaje</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.contractButton}
+            onPress={handleContract}
+          >
+            <Text style={styles.buttonText}>Contratar</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -82,7 +113,7 @@ export default function ProveedorScreen() {
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.scrollContainer}
-      showsVerticalScrollIndicator={true} // Muestra la barra de desplazamiento
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.container}>
         <Proveedor />
@@ -147,7 +178,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
+  messageButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#28a745",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  contractButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#ffc107",
+    borderRadius: 8,
+    alignItems: "center",
+  },
   backButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  buttonText: {
     color: "#fff",
     fontSize: 16,
   },
