@@ -30,6 +30,7 @@ function HomeScreen({ navigation }) {
   const [accountType, setAccountType] = useState("Cliente"); // Estado para el tipo de cuenta
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
+  // Función para guardar el perfil en AsyncStorage
   const saveProfile = async (profile) => {
     try {
       await AsyncStorage.setItem("perfil", JSON.stringify(profile));
@@ -39,13 +40,16 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  // Función para manejar el inicio de sesión
   const handleLogin = async () => {
     let usuarioEncontrado = null;
     let tipoUsuario = "";
 
     try {
       // Verificar en usuarios
-      let response = await axios.get("http://192.168.1.127:8080/usuarios");
+      let response = await axios.get(
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/usuarios"
+      );
       let usuarios = response.data;
       usuarioEncontrado = usuarios.find(
         (user) => user.correo === email && user.password === password
@@ -54,7 +58,9 @@ function HomeScreen({ navigation }) {
 
       if (!usuarioEncontrado) {
         // Verificar en organizadores
-        response = await axios.get("http://192.168.1.127:8080/organizador");
+        response = await axios.get(
+          "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/organizador"
+        );
         let organizadores = response.data;
         usuarioEncontrado = organizadores.find(
           (user) => user.correo === email && user.password === password
@@ -64,7 +70,9 @@ function HomeScreen({ navigation }) {
 
       if (!usuarioEncontrado) {
         // Verificar en proveedores
-        response = await axios.get("http://192.168.1.127:8080/proveedor");
+        response = await axios.get(
+          "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/proveedor"
+        );
         let proveedores = response.data;
         usuarioEncontrado = proveedores.find(
           (user) => user.correo === email && user.password === password
@@ -97,11 +105,12 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  // Función para verificar si el correo ya existe en la base de datos
   const verificarCorreoExistente = async (correo) => {
     try {
       // Verificar en usuarios
       const usuariosResponse = await axios.get(
-        "http://192.168.1.127:8080/usuarios"
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/usuarios"
       );
       const usuarios = usuariosResponse.data;
       if (usuarios.some((user) => user.correo === correo)) {
@@ -110,7 +119,7 @@ function HomeScreen({ navigation }) {
 
       // Verificar en organizadores
       const organizadoresResponse = await axios.get(
-        "http://192.168.1.127:8080/organizador"
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/organizador"
       );
       const organizadores = organizadoresResponse.data;
       if (organizadores.some((user) => user.correo === correo)) {
@@ -119,7 +128,7 @@ function HomeScreen({ navigation }) {
 
       // Verificar en proveedores
       const proveedoresResponse = await axios.get(
-        "http://192.168.1.127:8080/proveedor"
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/proveedor"
       );
       const proveedores = proveedoresResponse.data;
       if (proveedores.some((user) => user.correo === correo)) {
@@ -134,6 +143,7 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  // Función para manejar la creación de una nueva cuenta
   const handleCreateAccount = async () => {
     const correoExistente = await verificarCorreoExistente(email);
     if (correoExistente) {
@@ -152,7 +162,7 @@ function HomeScreen({ navigation }) {
 
     try {
       const createResponse = await axios.post(
-        `http://192.168.1.127:8080/${accountType.toLowerCase()}`,
+        `https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/${accountType.toLowerCase()}`,
         nuevoUsuario
       );
 

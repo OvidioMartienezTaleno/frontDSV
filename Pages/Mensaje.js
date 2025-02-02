@@ -42,7 +42,7 @@ export default function MensajeScreen() {
         const fetchMensajes = async () => {
           try {
             const response = await axios.get(
-              "http://192.168.1.127:8080/mensajes"
+              "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/mensajes"
             );
             const mensajesFiltrados = response.data.filter(
               (mensaje) =>
@@ -113,7 +113,7 @@ export default function MensajeScreen() {
 
     try {
       const response = await axios.post(
-        "http://192.168.1.127:8080/mensajes",
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/mensajes",
         mensaje
       );
       if (response.status === 201) {

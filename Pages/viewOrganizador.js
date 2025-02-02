@@ -19,17 +19,18 @@ import { createStackNavigator } from "@react-navigation/stack";
 const Stack = createStackNavigator();
 
 function HomeScreen({ navigation }) {
-  const [usuarios, setUsuarios] = useState([]);
-  const [perfil, setPerfil] = useState(null);
-  const [servicio, setServicio] = useState("");
-  const [servicios, setServicios] = useState([]);
+  const [usuarios, setUsuarios] = useState([]); // Estado para almacenar la lista de usuarios
+  const [perfil, setPerfil] = useState(null); // Estado para almacenar el perfil del usuario
+  const [servicio, setServicio] = useState(""); // Estado para el nuevo servicio a agregar
+  const [servicios, setServicios] = useState([]); // Estado para almacenar la lista de servicios del usuario
 
+  // Efecto para cargar el perfil desde AsyncStorage cuando el componente se monta
   useEffect(() => {
     const cargarPerfil = async () => {
       try {
         const perfilGuardado = await AsyncStorage.getItem("perfil");
         if (perfilGuardado !== null) {
-          setPerfil(JSON.parse(perfilGuardado));
+          setPerfil(JSON.parse(perfilGuardado)); // Actualizar el estado con el perfil guardado
         }
       } catch (error) {
         console.error("Error al cargar el perfil:", error);
@@ -39,13 +40,14 @@ function HomeScreen({ navigation }) {
     cargarPerfil();
   }, []);
 
+  // Efecto para obtener la lista de usuarios desde la API cuando el componente se monta
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
         const response = await axios.get(
-          "http://192.168.1.127:8080/organizador"
+          "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/organizador"
         );
-        setUsuarios(response.data);
+        setUsuarios(response.data); // Actualizar el estado con los datos obtenidos
       } catch (error) {
         console.error(error);
       }
@@ -54,21 +56,19 @@ function HomeScreen({ navigation }) {
     fetchUsuarios();
   }, []);
 
+  // Efecto para filtrar y establecer los servicios del usuario en el estado
   useEffect(() => {
     if (perfil?.correo) {
       const usuarioFiltrado = usuarios.find(
         (usuario) => usuario.correo === perfil.correo
       );
       if (usuarioFiltrado) {
-        setServicios(usuarioFiltrado.servicios || []);
+        setServicios(usuarioFiltrado.servicios || []); // Actualizar el estado con los servicios del usuario filtrado
       }
     }
   }, [usuarios, perfil]);
 
-  const usuarioFiltrado = usuarios.find(
-    (usuario) => usuario.correo === perfil?.correo
-  );
-
+  // Función para manejar la adición de un nuevo servicio
   const handleAddService = async () => {
     if (servicio.trim() === "") {
       Alert.alert("Error", "Por favor, introduce un servicio válido.");
@@ -76,15 +76,18 @@ function HomeScreen({ navigation }) {
     }
 
     try {
-      const response = await axios.post("http://192.168.1.127:8080/servicios", {
-        correo: perfil.correo,
-        servicio,
-      });
+      const response = await axios.post(
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/servicios",
+        {
+          correo: perfil.correo,
+          servicio,
+        }
+      );
 
       if (response.status === 201) {
         Alert.alert("Éxito", "Servicio agregado correctamente.");
-        setServicios([...servicios, servicio]);
-        setServicio("");
+        setServicios([...servicios, servicio]); // Actualizar la lista de servicios en el estado
+        setServicio(""); // Limpiar el campo de texto
       } else {
         Alert.alert("Error", "No se pudo agregar el servicio.");
       }
@@ -94,9 +97,15 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  // Filtrar el usuario correspondiente al perfil cargado
+  const usuarioFiltrado = usuarios.find(
+    (usuario) => usuario.correo === perfil?.correo
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Perfil de Usuario (Organizador)</Text>
+      {/* Mostrar los detalles del perfil del usuario */}
       {usuarioFiltrado ? (
         <View style={styles.userCard}>
           <Text>Nombre: {usuarioFiltrado.nombre}</Text>
@@ -104,6 +113,7 @@ function HomeScreen({ navigation }) {
           <Text>Correo: {usuarioFiltrado.correo}</Text>
           <Text>Ubicación: {usuarioFiltrado.ubicacion}</Text>
           <Text>Servicios:</Text>
+          {/* Mapear la lista de servicios del usuario */}
           {servicios.map((serv, index) => (
             <Text key={index}>- {serv}</Text>
           ))}
@@ -122,6 +132,7 @@ function HomeScreen({ navigation }) {
   );
 }
 
+// Componente principal para manejar la navegación entre pantallas
 export default function ViewOrganizador() {
   return (
     <Stack.Navigator initialRouteName="Home">
@@ -135,6 +146,7 @@ export default function ViewOrganizador() {
           },
           headerTintColor: "#fff",
           headerLeft: () => null,
+          // Botones para navegar a diferentes pantallas
           headerRight: () => (
             <>
               <Button

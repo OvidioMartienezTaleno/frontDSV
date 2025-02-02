@@ -10,18 +10,22 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
+// Componente principal para manejar organizadores
 function Organizador() {
+  // Estado para almacenar la lista de organizadores
   const [organizadores, setOrganizadores] = useState([]);
+  // Estado para almacenar el organizador seleccionado
   const [selectedOrganizador, setSelectedOrganizador] = useState(null);
   const navigation = useNavigation();
 
+  // useEffect para obtener la lista de organizadores desde la API cuando el componente se monta
   useEffect(() => {
     const fetchOrganizadores = async () => {
       try {
         const response = await axios.get(
-          "http://192.168.1.127:8080/organizador"
+          "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/organizador"
         );
-        setOrganizadores(response.data);
+        setOrganizadores(response.data); // Actualizar el estado con los datos obtenidos
       } catch (error) {
         console.error("Error al obtener organizadores:", error);
       }
@@ -30,26 +34,31 @@ function Organizador() {
     fetchOrganizadores();
   }, []);
 
+  // Función para manejar la selección de un organizador
   const handleSelectOrganizador = (organizador) => {
     setSelectedOrganizador(organizador);
   };
 
+  // Función para navegar a la pantalla de mensajes con el organizador seleccionado
   const handleSendMessage = () => {
     if (selectedOrganizador) {
       navigation.navigate("Mensaje", { chatId: selectedOrganizador.correo });
     }
   };
 
+  // Función para manejar el contrato con el organizador seleccionado
   const handleContract = async () => {
     if (selectedOrganizador) {
       try {
         const perfilGuardado = await AsyncStorage.getItem("perfil");
         const perfil = perfilGuardado ? JSON.parse(perfilGuardado) : {};
 
+        // Guardar correos en AsyncStorage
         await AsyncStorage.setItem("idOrganizador", selectedOrganizador.correo);
         await AsyncStorage.setItem("idUsuario", perfil.correo);
 
-        navigation.navigate("Eventos", { isNewEvent: true }); // Navegar a la vista de Eventos
+        // Navegar a la vista de Eventos
+        navigation.navigate("Eventos", { isNewEvent: true });
       } catch (error) {
         console.error("Error al guardar correos en AsyncStorage:", error);
       }
@@ -70,6 +79,7 @@ function Organizador() {
           <Text>Correo: {selectedOrganizador.correo}</Text>
           <Text>Ubicación: {selectedOrganizador.ubicacion}</Text>
           <Text>Servicios:</Text>
+          {/* Mapear los servicios del organizador seleccionado */}
           {selectedOrganizador.servicios.map((servicio, index) => (
             <Text key={index} style={styles.servicioItem}>
               - {servicio}
@@ -97,6 +107,7 @@ function Organizador() {
       ) : (
         <>
           <Text style={styles.title}>Lista de Organizadores</Text>
+          {/* Mapear la lista de organizadores para mostrar cada uno en una tarjeta */}
           {organizadores.map((organizador, index) => (
             <TouchableOpacity
               key={index}
@@ -115,6 +126,7 @@ function Organizador() {
   );
 }
 
+// Componente para renderizar la pantalla principal de organizadores
 export default function OrganizadorScreen() {
   return (
     <ScrollView

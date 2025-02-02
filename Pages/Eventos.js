@@ -75,7 +75,9 @@ export default function EventosScreen() {
   // Función para cargar los eventos desde la API
   const cargarEventos = async () => {
     try {
-      const response = await axios.get("http://192.168.1.127:8080/evento"); // Petición GET para obtener eventos
+      const response = await axios.get(
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/evento"
+      ); // Petición GET para obtener eventos
       const eventos = response.data;
 
       // Filtrar los eventos por el correo registrado en el perfil
@@ -103,7 +105,10 @@ export default function EventosScreen() {
   const handleSaveEvento = async () => {
     try {
       const nuevoEvento = { ...eventoDetalles, idOrganizador, idUsuario };
-      await axios.post("http://192.168.1.127:8080/evento", nuevoEvento); // Petición POST para guardar un nuevo evento
+      await axios.post(
+        "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/evento",
+        nuevoEvento
+      ); // Petición POST para guardar un nuevo evento
 
       alert("Detalles del evento guardados correctamente");
       cargarEventos(); // Actualizar la lista de eventos después de agregar uno nuevo
@@ -118,9 +123,12 @@ export default function EventosScreen() {
   const handleSelectEvent = async (idEvento) => {
     try {
       // Actualizar el evento con el idProveedor
-      await axios.put(`http://192.168.1.127:8080/evento/${idEvento}`, {
-        idProveedor,
-      });
+      await axios.put(
+        `https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/evento/${idEvento}`,
+        {
+          idProveedor,
+        }
+      );
       alert("Proveedor agregado al evento correctamente");
       cargarEventos(); // Actualizar la lista de eventos después de agregar un proveedor
       navigation.navigate("Eventos"); // Navegar a la vista de eventos guardados
@@ -133,7 +141,9 @@ export default function EventosScreen() {
   // Función para eliminar un evento
   const handleDeleteEvento = async (idEvento) => {
     try {
-      await axios.delete(`http://192.168.1.127:8080/evento/${idEvento}`); // Petición DELETE para eliminar un evento
+      await axios.delete(
+        `https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/evento/${idEvento}`
+      ); // Petición DELETE para eliminar un evento
       setEventos(eventos.filter((evento) => evento.id !== idEvento)); // Filtrar el evento eliminado de la lista de eventos
       alert("Evento eliminado correctamente");
     } catch (error) {

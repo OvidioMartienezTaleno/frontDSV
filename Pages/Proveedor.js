@@ -10,16 +10,22 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
+// Componente principal para manejar proveedores
 function Proveedor() {
+  // Estado para almacenar la lista de proveedores
   const [proveedores, setProveedores] = useState([]);
+  // Estado para almacenar el proveedor seleccionado
   const [selectedProveedor, setSelectedProveedor] = useState(null);
   const navigation = useNavigation();
 
+  // useEffect para obtener la lista de proveedores desde la API cuando el componente se monta
   useEffect(() => {
     const fetchProveedores = async () => {
       try {
-        const response = await axios.get("http://192.168.1.127:8080/proveedor");
-        setProveedores(response.data);
+        const response = await axios.get(
+          "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/proveedor"
+        );
+        setProveedores(response.data); // Actualizar el estado con los datos obtenidos
       } catch (error) {
         console.error("Error al obtener proveedores:", error);
       }
@@ -28,20 +34,25 @@ function Proveedor() {
     fetchProveedores();
   }, []);
 
+  // Función para manejar la selección de un proveedor
   const handleSelectProveedor = (proveedor) => {
     setSelectedProveedor(proveedor);
   };
 
+  // Función para navegar a la pantalla de mensajes con el proveedor seleccionado
   const handleSendMessage = () => {
     if (selectedProveedor) {
       navigation.navigate("Mensaje", { chatId: selectedProveedor.correo });
     }
   };
 
+  // Función para manejar el contrato con el proveedor seleccionado
   const handleContract = async () => {
     if (selectedProveedor) {
       try {
+        // Guardar el correo del proveedor en AsyncStorage
         await AsyncStorage.setItem("idProveedor", selectedProveedor.correo);
+        // Navegar a la vista de Eventos para seleccionar uno
         navigation.navigate("Eventos", { isSelectingEvent: true });
       } catch (error) {
         console.error("Error al guardar idProveedor en AsyncStorage:", error);
@@ -63,6 +74,7 @@ function Proveedor() {
           <Text>Correo: {selectedProveedor.correo}</Text>
           <Text>Ubicación: {selectedProveedor.ubicacion}</Text>
           <Text>Servicios:</Text>
+          {/* Mapear los servicios del proveedor seleccionado */}
           {selectedProveedor.servicios.map((servicio, index) => (
             <Text key={index} style={styles.servicioItem}>
               - {servicio}
@@ -90,6 +102,7 @@ function Proveedor() {
       ) : (
         <>
           <Text style={styles.title}>Lista de Proveedores</Text>
+          {/* Mapear la lista de proveedores para mostrar cada uno en una tarjeta */}
           {proveedores.map((proveedor, index) => (
             <TouchableOpacity
               key={index}
@@ -108,6 +121,7 @@ function Proveedor() {
   );
 }
 
+// Componente para renderizar la pantalla principal de proveedores
 export default function ProveedorScreen() {
   return (
     <ScrollView

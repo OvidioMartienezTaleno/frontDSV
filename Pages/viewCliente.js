@@ -11,15 +11,16 @@ import { createStackNavigator } from "@react-navigation/stack";
 const Stack = createStackNavigator();
 
 function HomeScreen({ navigation }) {
-  const [usuarios, setUsuarios] = useState([]);
-  const [perfil, setPerfil] = useState(null);
+  const [usuarios, setUsuarios] = useState([]); // Estado para almacenar la lista de usuarios
+  const [perfil, setPerfil] = useState(null); // Estado para almacenar el perfil del usuario
 
+  // Efecto para cargar el perfil desde AsyncStorage cuando el componente se monta
   useEffect(() => {
     const cargarPerfil = async () => {
       try {
         const perfilGuardado = await AsyncStorage.getItem("perfil");
         if (perfilGuardado !== null) {
-          setPerfil(JSON.parse(perfilGuardado));
+          setPerfil(JSON.parse(perfilGuardado)); // Actualizar el estado con el perfil guardado
         }
       } catch (error) {
         console.error("Error al cargar el perfil:", error);
@@ -29,11 +30,14 @@ function HomeScreen({ navigation }) {
     cargarPerfil();
   }, []);
 
+  // Efecto para obtener la lista de usuarios desde la API cuando el componente se monta
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await axios.get("http://192.168.1.127:8080/usuarios");
-        setUsuarios(response.data);
+        const response = await axios.get(
+          "https://vyh328h455.execute-api.us-east-1.amazonaws.com/v1/usuarios"
+        );
+        setUsuarios(response.data); // Actualizar el estado con los datos obtenidos
       } catch (error) {
         console.error(error);
       }
@@ -42,6 +46,7 @@ function HomeScreen({ navigation }) {
     fetchUsuarios();
   }, []);
 
+  // Filtrar el usuario correspondiente al perfil cargado
   const usuarioFiltrado = usuarios.find(
     (usuario) => usuario.correo === perfil?.correo
   );
@@ -49,6 +54,7 @@ function HomeScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Perfil de Usuario</Text>
+      {/* Mostrar los detalles del perfil del usuario */}
       {usuarioFiltrado ? (
         <View style={styles.userCard}>
           <Text>Nombre: {usuarioFiltrado.nombre}</Text>
@@ -63,6 +69,7 @@ function HomeScreen({ navigation }) {
   );
 }
 
+// Componente principal para manejar la navegación entre pantallas
 export default function ViewCliente() {
   return (
     <Stack.Navigator initialRouteName="Home">
@@ -76,6 +83,7 @@ export default function ViewCliente() {
           },
           headerTintColor: "#fff",
           headerLeft: () => null, // Elimina la flecha de regreso
+          // Botones para navegar a diferentes pantallas
           headerRight: () => (
             <>
               <Button
